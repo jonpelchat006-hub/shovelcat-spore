@@ -1,0 +1,9 @@
+node_modules/
+dist/
+geo-cache/
+spore-identity.json
+word-registry.json
+mesh-node.json
+spore-state.json
+mesh-state.json
+*.geo
