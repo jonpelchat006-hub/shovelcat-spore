@@ -87,10 +87,25 @@ export function loadOrCreateIdentity(identityPath: string): SporeIdentity {
     changed = true;
   }
 
+  // Generate and register a 3-word address if not already set
+  if (!data.words) {
+    const wordBytes = crypto.randomBytes(3);
+    data.words = [WORDS[wordBytes[0]], WORDS[wordBytes[1]], WORDS[wordBytes[2]]].join(' ');
+    changed = true;
+  }
+
   if (changed) {
     fs.mkdirSync(path.dirname(path.resolve(identityPath)), { recursive: true });
     fs.writeFileSync(identityPath, JSON.stringify(data, null, 2));
   }
+
+  // Register words → nodeId mapping in local registry
+  registerWords(
+    data.words as string,
+    nodeId,
+    data.publicKey as string,
+    data.encPublicKey as string,
+  );
 
   // Decrypt private keys → unencrypted DER for in-memory use (auto-unlocked via nodeId)
   const sigPrivKey = crypto.createPrivateKey({
@@ -203,7 +218,15 @@ export function wordsToNodeId(words: string): string | null {
   return reg[words]?.nodeId ?? null;
 }
 
-export function nodeIdToWords(nodeId: string): string | null {
+export function nodeIdToWords(nodeId: string, identityPath?: string): string | null {
+  // Fast path: check identity file directly (words stored there on creation)
+  if (identityPath) {
+    try {
+      const data = JSON.parse(fs.readFileSync(identityPath, 'utf8'));
+      if (data.nodeId === nodeId && data.words) return data.words as string;
+    } catch { /* fall through */ }
+  }
+  // Slow path: scan registry
   const reg = loadRegistry();
   const entry = Object.entries(reg).find(([, v]) => v.nodeId === nodeId);
   return entry ? entry[0] : null;

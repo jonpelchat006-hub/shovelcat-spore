@@ -34,7 +34,7 @@ console.log(`[spore] Geo dir: ${GEO_DIR}`);
 let identity: SporeIdentity;
 try {
   identity = loadOrCreateIdentity(IDENTITY_PATH);
-  const words = nodeIdToWords(identity.nodeId) ?? "(no word address)";
+  const words = nodeIdToWords(identity.nodeId, IDENTITY_PATH) ?? "(no word address)";
   console.log(`[spore] Node ID:  ${identity.nodeId}`);
   console.log(`[spore] Address:  ${words}`);
 } catch (err) {
@@ -127,7 +127,7 @@ export function sendMessage(
     scope?:       string;
   } = {}
 ): void {
-  const fromWords = nodeIdToWords(identity.nodeId);
+  const fromWords = nodeIdToWords(identity.nodeId, IDENTITY_PATH);
   let geoContent: string;
 
   if (type === "direct") {
